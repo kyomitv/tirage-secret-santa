@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tirage Secret Santa 🎁 - Découvrez votre cible</title>
+  <meta name="description" content="Cliquez sur votre prénom pour découvrir qui est votre cible secrète pour ce Secret Santa.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand-badge">🎄 Tirage Secret Santa 🎅</div>
+      <h1 class="app-title" id="draw-event-title">Chargement du tirage...</h1>
+      
+      <div class="event-info-bar" id="event-info-bar" style="display: none;">
+        <span class="info-pill" id="pill-budget" style="display: none;">
+          💰 Budget : <strong id="val-budget"></strong>
+        </span>
+        <span class="info-pill" id="pill-rules" style="display: none;">
+          📝 <span id="val-rules"></span>
+        </span>
+      </div>
+
+      <p class="app-subtitle">
+        Cliquez sur <strong>votre prénom</strong> pour ouvrir votre enveloppe secrète.
+        <br>
+        <span style="color: var(--gold-400); font-size: 0.95rem; font-weight: 500;">
+          ⚠️ Chaque enveloppe ne peut être ouverte <strong>qu'une seule fois</strong> !
+        </span>
+      </p>
+    </header>
+
+    <main>
+      <!-- Loading state -->
+      <div id="draw-loading" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+        <p style="font-size: 1.25rem;">✨ Préparation des enveloppes festives...</p>
+      </div>
+
+      <!-- Error state -->
+      <div id="draw-error" class="glass-panel" style="display: none; text-align: center; max-width: 500px; margin: 0 auto;">
+        <span style="font-size: 3rem; display: block; margin-bottom: 1rem;">❄️</span>
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem; color: #fca5a5;">Tirage introuvable</h2>
+        <p id="draw-error-msg" style="color: var(--text-secondary); margin-bottom: 1.5rem;"></p>
+        <a href="/" class="btn btn-gold">Créer un nouveau tirage</a>
+      </div>
+
+      <!-- Cards Grid -->
+      <div class="cards-grid" id="participants-grid" style="display: none;"></div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay" id="confirm-modal">
+      <div class="modal-card">
+        <span class="modal-icon">✉️</span>
+        <h2 class="modal-title" id="confirm-name-title">Êtes-vous bien ?</h2>
+        <p class="modal-desc">
+          Vous êtes sur le point d'ouvrir l'enveloppe secrète de <strong id="confirm-name-highlight" style="color: var(--gold-300);"></strong>.
+        </p>
+
+        <div class="warning-callout">
+          <span style="font-size: 1.25rem;">⚠️</span>
+          <div>
+            <strong>Ouverture unique :</strong> Une fois ouverte, cette enveloppe sera définitivement scellée. Personne d'autre ne pourra plus l'ouvrir.
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-reveal" class="btn btn-secondary">
+            Annuler
+          </button>
+          <button type="button" id="btn-confirm-reveal" class="btn btn-primary">
+            Oui, c'est moi ! 🎁
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result / Reveal Modal -->
+    <div class="modal-overlay" id="reveal-modal">
+      <div class="modal-card" style="border-color: rgba(245, 158, 11, 0.4);">
+        <span class="modal-icon">🎁</span>
+        <h2 class="modal-title" id="reveal-modal-title">Félicitations !</h2>
+        <p class="modal-desc" id="reveal-modal-desc">
+          Tu as tiré au sort la personne suivante :
+        </p>
+
+        <div class="reveal-target-box">
+          <div class="reveal-label">Tu dois offrir un cadeau à :</div>
+          <div class="reveal-name" id="target-recipient-name">...</div>
+        </div>
+
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">
+          🤫 Chut ! Garde ce secret bien au chaud jusqu'au déballage des cadeaux !
+        </p>
+
+        <div class="modal-actions" style="flex-wrap: wrap;">
+          <button type="button" id="btn-copy-target" class="btn btn-gold btn-sm">
+            📋 Copier le prénom
+          </button>
+          <button type="button" id="btn-close-reveal" class="btn btn-secondary btn-sm">
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Already Opened Alert Modal -->
+    <div class="modal-overlay" id="locked-modal">
+      <div class="modal-card">
+        <span class="modal-icon">🔒</span>
+        <h2 class="modal-title" style="color: #fca5a5;">Enveloppe déjà ouverte</h2>
+        <p class="modal-desc">
+          L'enveloppe de <strong id="locked-person-name" style="color: #fff;"></strong> a déjà été ouverte et scellée.
+        </p>
+        <div class="warning-callout" style="background: rgba(15, 23, 42, 0.6); border-color: rgba(255, 255, 255, 0.1); color: var(--text-secondary);">
+          Pour préserver la surprise et la confidentialité du tirage, chaque enveloppe ne peut être consultée qu'une seule fois.
+        </div>
+        <button type="button" id="btn-close-locked" class="btn btn-secondary btn-full">
+          Compris
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/snow.js"></script>
+  <script src="/js/confetti.min.js"></script>
+  <script src="/js/draw.js"></script>
+</body>
+</html>
