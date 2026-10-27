@@ -178,6 +178,68 @@
     });
   });
 
+  // Reset all openings
+  const btnResetAll = document.getElementById('btn-reset-all-openings');
+  if (btnResetAll) {
+    btnResetAll.addEventListener('click', async () => {
+      if (!confirm('Voulez-vous vraiment réinitialiser toutes les ouvertures ?\n\nChaque invité pourra rouvrir son enveloppe (le tirage reste identique).')) {
+        return;
+      }
+
+      try {
+        btnResetAll.disabled = true;
+        const res = await fetch(`/api/events/${eventId}/admin/reset-all`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminToken })
+        });
+
+        const data = await res.json();
+        btnResetAll.disabled = false;
+        if (!res.ok) {
+          throw new Error(data.error || 'Erreur lors de la réinitialisation');
+        }
+
+        showToast('🔄 Toutes les enveloppes ont été remises à zéro !');
+        loadAdminData();
+      } catch (err) {
+        btnResetAll.disabled = false;
+        showToast(err.message);
+      }
+    });
+  }
+
+  // Reroll whole draw
+  const btnRerollDraw = document.getElementById('btn-reroll-draw');
+  if (btnRerollDraw) {
+    btnRerollDraw.addEventListener('click', async () => {
+      if (!confirm('⚠️ ATTENTION : Voulez-vous vraiment relancer un NOUVEAU tirage au sort ?\n\nDe nouvelles attributions secrètes seront créées pour tout le monde et toutes les enveloppes seront remises à zéro.')) {
+        return;
+      }
+
+      try {
+        btnRerollDraw.disabled = true;
+        const res = await fetch(`/api/events/${eventId}/admin/reroll`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminToken })
+        });
+
+        const data = await res.json();
+        btnRerollDraw.disabled = false;
+        if (!res.ok) {
+          throw new Error(data.error || 'Erreur lors du retirage');
+        }
+
+        showToast('🎲 Nouveau tirage effectué pour tous les participants !');
+        loadAdminData();
+      } catch (err) {
+        btnRerollDraw.disabled = false;
+        showToast(err.message);
+      }
+    });
+  }
+
   btnRefresh.addEventListener('click', () => {
     loadAdminData();
     showToast('Données actualisées');

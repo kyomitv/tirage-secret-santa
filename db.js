@@ -36,7 +36,8 @@ if (isVercelKv) {
       title TEXT NOT NULL,
       budget TEXT,
       rules TEXT,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      exclusions TEXT
     );
 
     CREATE TABLE IF NOT EXISTS participants (
@@ -50,6 +51,11 @@ if (isVercelKv) {
       FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE
     );
   `);
+
+  try {
+    sqliteDb.exec('ALTER TABLE events ADD COLUMN exclusions TEXT;');
+  } catch (_) {}
+
   console.log('📦 Utilisation de la base SQLite locale');
 }
 
@@ -151,18 +157,26 @@ export async function createEvent({ title, budget, rules, participants, exclusio
       budget: budget || '',
       rules: rules || '',
       created_at: now,
+      exclusions: exclusions || {},
       participants: participantObjects
     };
-    // Save to KV with 90-day expiration
     await redisClient.set(`secretsanta:event:${eventId}`, JSON.stringify(eventData), {
       ex: 60 * 60 * 24 * 90
     });
   } else {
     const insertEvent = sqliteDb.prepare(`
-      INSERT INTO events (id, admin_token, title, budget, rules, created_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO events (id, admin_token, title, budget, rules, created_at, exclusions)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
-    insertEvent.run(eventId, adminToken, title || 'Secret Santa', budget || '', rules || '', now);
+    insertEvent.run(
+      eventId,
+      adminToken,
+      title || 'Secret Santa',
+      budget || '',
+      rules || '',
+      now,
+      JSON.stringify(exclusions || {})
+    );
 
     const insertParticipant = sqliteDb.prepare(`
       INSERT INTO participants (id, event_id, name, target_name, is_opened, opened_at, opened_token)
@@ -415,6 +429,105 @@ export async function resetParticipant(eventId, participantId, adminToken) {
     WHERE id = ? AND event_id = ?
   `);
   updateStmt.run(participantId, eventId);
+  return { success: true };
+}
+
+export async function resetAllOpenings(eventId, adminToken) {
+  if (isVercelKv) {
+    const raw = await redisClient.get(`secretsanta:event:${eventId}`);
+    if (!raw) return { success: false, status: 404, message: 'Tirage non trouvé.' };
+    const event = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+    if (event.admin_token !== adminToken) {
+      return { success: false, status: 401, message: 'Non autorisé.' };
+    }
+
+    event.participants.forEach(p => {
+      p.is_opened = 0;
+      p.opened_at = null;
+      p.opened_token = null;
+    });
+
+    await redisClient.set(`secretsanta:event:${eventId}`, JSON.stringify(event), {
+      ex: 60 * 60 * 24 * 90
+    });
+    return { success: true };
+  }
+
+  const eventStmt = sqliteDb.prepare('SELECT id FROM events WHERE id = ? AND admin_token = ?');
+  const event = eventStmt.get(eventId, adminToken);
+  if (!event) {
+    return { success: false, status: 401, message: 'Non autorisé.' };
+  }
+
+  const updateStmt = sqliteDb.prepare(`
+    UPDATE participants
+    SET is_opened = 0, opened_at = NULL, opened_token = NULL
+    WHERE event_id = ?
+  `);
+  updateStmt.run(eventId);
+  return { success: true };
+}
+
+export async function rerollDraw(eventId, adminToken) {
+  if (isVercelKv) {
+    const raw = await redisClient.get(`secretsanta:event:${eventId}`);
+    if (!raw) return { success: false, status: 404, message: 'Tirage non trouvé.' };
+    const event = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+    if (event.admin_token !== adminToken) {
+      return { success: false, status: 401, message: 'Non autorisé.' };
+    }
+
+    const names = event.participants.map(p => p.name);
+    const pairs = generatePairs(names, event.exclusions || {});
+
+    event.participants.forEach(p => {
+      const match = pairs.find(pair => pair.giver === p.name);
+      if (match) {
+        p.target_name = match.receiver;
+      }
+      p.is_opened = 0;
+      p.opened_at = null;
+      p.opened_token = null;
+    });
+
+    await redisClient.set(`secretsanta:event:${eventId}`, JSON.stringify(event), {
+      ex: 60 * 60 * 24 * 90
+    });
+    return { success: true };
+  }
+
+  const eventStmt = sqliteDb.prepare('SELECT * FROM events WHERE id = ? AND admin_token = ?');
+  const event = eventStmt.get(eventId, adminToken);
+  if (!event) {
+    return { success: false, status: 401, message: 'Non autorisé.' };
+  }
+
+  const partStmt = sqliteDb.prepare('SELECT id, name FROM participants WHERE event_id = ?');
+  const parts = partStmt.all(eventId);
+  const names = parts.map(p => p.name);
+
+  let exclusions = {};
+  try {
+    exclusions = event.exclusions ? JSON.parse(event.exclusions) : {};
+  } catch (_) {}
+
+  const pairs = generatePairs(names, exclusions);
+
+  const updateStmt = sqliteDb.prepare(`
+    UPDATE participants
+    SET target_name = ?, is_opened = 0, opened_at = NULL, opened_token = NULL
+    WHERE id = ? AND event_id = ?
+  `);
+
+  for (const p of parts) {
+    const match = pairs.find(pair => pair.giver === p.name);
+    if (match) {
+      updateStmt.run(match.receiver, p.id, eventId);
+    }
+  }
+
   return { success: true };
 }
 

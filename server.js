@@ -7,6 +7,8 @@ import {
   getAdminEvent,
   revealParticipant,
   resetParticipant,
+  resetAllOpenings,
+  rerollDraw,
   deleteEvent
 } from './db.js';
 
@@ -104,6 +106,42 @@ app.post('/api/events/:id/admin/reset', async (req, res) => {
     }
 
     const result = await resetParticipant(req.params.id, participantId, adminToken);
+    if (!result.success) {
+      return res.status(result.status || 400).json({ error: result.message });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/events/:id/admin/reset-all', async (req, res) => {
+  try {
+    const { adminToken } = req.body;
+    if (!adminToken) {
+      return res.status(400).json({ error: 'Jeton administrateur manquant.' });
+    }
+
+    const result = await resetAllOpenings(req.params.id, adminToken);
+    if (!result.success) {
+      return res.status(result.status || 400).json({ error: result.message });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/events/:id/admin/reroll', async (req, res) => {
+  try {
+    const { adminToken } = req.body;
+    if (!adminToken) {
+      return res.status(400).json({ error: 'Jeton administrateur manquant.' });
+    }
+
+    const result = await rerollDraw(req.params.id, adminToken);
     if (!result.success) {
       return res.status(result.status || 400).json({ error: result.message });
     }

@@ -93,6 +93,44 @@
           <tbody id="admin-participants-tbody"></tbody>
         </table>
       </div>
+
+      <!-- Reset & Management Zone -->
+      <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-lg);">
+        <h4 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🛠️ Zone de Réinitialisation</span>
+        </h4>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.25rem;">
+          Quelqu'un s'est trompé de prénom ou vous souhaitez recommencer ? Choisissez l'option appropriée :
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+          <!-- Option 1: Reset all openings -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: var(--radius-md); padding: 1rem;">
+            <strong style="color: var(--gold-400); display: block; font-size: 0.95rem; margin-bottom: 0.35rem;">
+              🔄 1. Réinitialiser les ouvertures
+            </strong>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.85rem;">
+              Conserve exactement les <strong>mêmes attributions</strong> secrètes, mais permet à tout le monde de ré-ouvrir son enveloppe.
+            </p>
+            <button type="button" id="btn-reset-all-openings" class="btn btn-secondary btn-sm btn-full" style="color: var(--gold-300); border-color: rgba(245, 158, 11, 0.4);">
+              Remettre toutes les enveloppes à zéro
+            </button>
+          </div>
+
+          <!-- Option 2: Reroll whole draw -->
+          <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--radius-md); padding: 1rem;">
+            <strong style="color: #fca5a5; display: block; font-size: 0.95rem; margin-bottom: 0.35rem;">
+              🎲 2. Relancer un nouveau tirage complet
+            </strong>
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 0.85rem;">
+              Re-mélange complètement les participants et génère de <strong>nouvelles attributions secrètes</strong> (en respectant les exclusions).
+            </p>
+            <button type="button" id="btn-reroll-draw" class="btn btn-secondary btn-sm btn-full" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
+              Re-tirer au sort pour tout le monde
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 

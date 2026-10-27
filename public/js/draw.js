@@ -114,6 +114,10 @@
       card.dataset.name = p.name;
 
       if (!p.isOpened) {
+        if (storedClaims[p.id]) {
+          delete storedClaims[p.id];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(storedClaims));
+        }
         card.classList.add('ready');
         card.innerHTML = `
           <div class="envelope-icon">✉️</div>
